@@ -13,6 +13,12 @@ local.properties
 keystore.properties
 *.keystore
 
+# Key export artifacts (DO NOT COMMIT)
+pepk_out.zip
+*_cert.pem
+upload_cert.pem
+rustore_cert.pem
+
 # Backups
 *.bak.*
 
