@@ -1,0 +1,18 @@
+# Gradle / Android
+**/build/
+.gradle/
+
+# IntelliJ / Android Studio
+.idea/
+*.iml
+
+# Local SDK config
+local.properties
+
+# Release signing (DO NOT COMMIT)
+keystore.properties
+*.keystore
+
+# Backups
+*.bak.*
+

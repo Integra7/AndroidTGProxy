@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">WSProxy</string>
+
+    <string name="status_stopped">Stopped</string>
+    <string name="config_placeholder">Server: 127.0.0.1\nPort: 1443\nSecret: …</string>
+    <string name="start_proxy">Start proxy</string>
+    <string name="open_in_telegram">Open in Telegram</string>
+    <string name="autostart_after_reboot">Autostart after reboot</string>
+    <string name="telegram_setup_info">In Telegram: Settings → Data and Storage → Proxy → Add proxy → MTProto\nServer: 127.0.0.1, Port: 1443, Secret: shown above.\nYou can also use the tg://proxy link.</string>
+</resources>

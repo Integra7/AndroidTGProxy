@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Base lock PNG (your provided icon) -->
+    <item
+        android:width="43dp"
+        android:height="43dp"
+        android:gravity="center"
+        android:drawable="@drawable/lock_base" />
+
+    <!-- TG-like badge placed where keyhole was -->
+    <item
+        android:width="27dp"
+        android:height="27dp"
+        android:gravity="center"
+        android:top="20dp"
+        android:drawable="@drawable/ic_tg_badge" />
+
+</layer-list>
