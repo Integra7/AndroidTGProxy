@@ -1,4 +1,4 @@
-package com.example.androidtgproxy
+package com.integra.wsproxy
 
 import java.io.Closeable
 import java.io.InputStream

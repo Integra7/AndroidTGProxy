@@ -1,4 +1,4 @@
-package com.example.androidtgproxy
+package com.integra.wsproxy
 
 import org.junit.Test
 

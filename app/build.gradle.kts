@@ -6,11 +6,11 @@ plugins {
 import java.util.Properties
 
 android {
-    namespace = "com.example.androidtgproxy"
+    namespace = "com.integra.wsproxy"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.androidtgproxy"
+        applicationId = "com.integra.wsproxy"
         minSdk = 24
         targetSdk = 34
         versionCode = 1

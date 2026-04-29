@@ -1,4 +1,4 @@
-package com.example.androidtgproxy
+package com.integra.wsproxy
 
 import android.content.BroadcastReceiver
 import android.content.Context

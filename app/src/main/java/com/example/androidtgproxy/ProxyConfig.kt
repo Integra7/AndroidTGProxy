@@ -1,4 +1,4 @@
-package com.example.androidtgproxy
+package com.integra.wsproxy
 
 data class ProxyConfig(
     val listenHost: String,

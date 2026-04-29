@@ -1,4 +1,4 @@
-package com.example.androidtgproxy
+package com.integra.wsproxy
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -129,10 +129,10 @@ class ProxyService : Service() {
     }
 
     companion object {
-        const val ACTION_START = "com.example.androidtgproxy.action.START"
-        const val ACTION_STOP = "com.example.androidtgproxy.action.STOP"
-        const val ACTION_OPEN_TELEGRAM = "com.example.androidtgproxy.action.OPEN_TELEGRAM"
-        const val ACTION_STATE_CHANGED = "com.example.androidtgproxy.action.STATE_CHANGED"
+        const val ACTION_START = "com.integra.wsproxy.action.START"
+        const val ACTION_STOP = "com.integra.wsproxy.action.STOP"
+        const val ACTION_OPEN_TELEGRAM = "com.integra.wsproxy.action.OPEN_TELEGRAM"
+        const val ACTION_STATE_CHANGED = "com.integra.wsproxy.action.STATE_CHANGED"
         const val EXTRA_RUNNING = "running"
 
         // Bump channel id to avoid old user channel settings (silent/minimized) hiding status icons.
