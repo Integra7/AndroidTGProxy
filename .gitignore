@@ -36,7 +36,6 @@ rustore_cert.pem
 
 # Scripts / local tooling (DO NOT COMMIT)
 scripts/
-assets/
 
 # Archives (DO NOT COMMIT)
 *.zip
