@@ -27,8 +27,8 @@ class ProxyService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            ACTION_START -> startProxy()
-            ACTION_STOP -> stopProxy()
+            ProxyIntents.ACTION_START -> startProxy()
+            ProxyIntents.ACTION_STOP -> stopProxy()
             else -> startProxy()
         }
         return START_STICKY
@@ -49,12 +49,14 @@ class ProxyService : Service() {
         isRunning = true
         ProxyStateStore.get(this).setRunning(true)
 
-        startForeground(NOTIF_ID, buildNotification("Running on ${cfg.listenHost}:${cfg.listenPort}"))
+        startForeground(
+            ProxyNotification.NOTIFICATION_ID,
+            buildNotification(getString(R.string.notification_running_on, cfg.listenHost, cfg.listenPort))
+        )
         broadcastState(true)
         scope.launch {
             runCatching { proxy?.run() }
                 .onFailure {
-                    // Stop on fatal errors so UI doesn't lie.
                     stopProxy()
                 }
         }
@@ -75,9 +77,9 @@ class ProxyService : Service() {
     }
 
     private fun broadcastState(running: Boolean) {
-        sendBroadcast(Intent(ACTION_STATE_CHANGED).apply {
+        sendBroadcast(Intent(ProxyIntents.ACTION_STATE_CHANGED).apply {
             setPackage(packageName)
-            putExtra(EXTRA_RUNNING, running)
+            putExtra(ProxyIntents.EXTRA_RUNNING, running)
         })
     }
 
@@ -92,28 +94,28 @@ class ProxyService : Service() {
         val stopIntent = PendingIntent.getBroadcast(
             this,
             1,
-            Intent(this, ProxyActionReceiver::class.java).apply { action = ACTION_STOP },
+            Intent(this, ProxyActionReceiver::class.java).apply { action = ProxyIntents.ACTION_STOP },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val openTelegramIntent = PendingIntent.getBroadcast(
             this,
             2,
-            Intent(this, ProxyActionReceiver::class.java).apply { action = ACTION_OPEN_TELEGRAM },
+            Intent(this, ProxyActionReceiver::class.java).apply { action = ProxyIntents.ACTION_OPEN_TELEGRAM },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        return NotificationCompat.Builder(this, CHANNEL_ID)
+        return NotificationCompat.Builder(this, ProxyNotification.CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_ws_status)
-            .setContentTitle("TG WS Proxy")
+            .setContentTitle(getString(R.string.notification_title))
             .setContentText(text)
             .setContentIntent(openIntent)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .setOngoing(true)
-            .addAction(0, "Open Telegram", openTelegramIntent)
-            .addAction(0, "Stop", stopIntent)
+            .addAction(0, getString(R.string.notification_action_open_telegram), openTelegramIntent)
+            .addAction(0, getString(R.string.notification_action_stop), stopIntent)
             .build()
     }
 
@@ -121,24 +123,14 @@ class ProxyService : Service() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val mgr = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val ch = NotificationChannel(
-            CHANNEL_ID,
-            "TG WS Proxy",
+            ProxyNotification.CHANNEL_ID,
+            getString(R.string.notification_channel_name),
             NotificationManager.IMPORTANCE_DEFAULT
         )
         mgr.createNotificationChannel(ch)
     }
 
     companion object {
-        const val ACTION_START = "com.integra.wsproxy.action.START"
-        const val ACTION_STOP = "com.integra.wsproxy.action.STOP"
-        const val ACTION_OPEN_TELEGRAM = "com.integra.wsproxy.action.OPEN_TELEGRAM"
-        const val ACTION_STATE_CHANGED = "com.integra.wsproxy.action.STATE_CHANGED"
-        const val EXTRA_RUNNING = "running"
-
-        // Bump channel id to avoid old user channel settings (silent/minimized) hiding status icons.
-        private const val CHANNEL_ID = "tg_ws_proxy_v2"
-        private const val NOTIF_ID = 1001
-
         @Volatile
         var isRunning: Boolean = false
             private set

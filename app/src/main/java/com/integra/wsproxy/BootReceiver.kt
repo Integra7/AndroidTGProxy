@@ -13,7 +13,7 @@ class BootReceiver : BroadcastReceiver() {
         if (!autostart) return
 
         context.startService(Intent(context, ProxyService::class.java).apply {
-            action = ProxyService.ACTION_START
+            action = ProxyIntents.ACTION_START
         })
     }
 

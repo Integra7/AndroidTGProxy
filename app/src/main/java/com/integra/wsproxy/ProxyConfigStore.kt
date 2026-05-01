@@ -25,7 +25,6 @@ class ProxyConfigStore private constructor(private val ctx: Context) {
     }
 
     fun tgProxyLink(cfg: ProxyConfig): String {
-        // dd-secret format like upstream
         return "tg://proxy?server=${cfg.listenHost}&port=${cfg.listenPort}&secret=dd${cfg.secretHex}"
     }
 

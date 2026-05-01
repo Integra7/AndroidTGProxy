@@ -19,8 +19,8 @@ import androidx.core.content.edit
 class MainActivity : AppCompatActivity() {
     private val stateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action != ProxyService.ACTION_STATE_CHANGED) return
-            val running = intent.getBooleanExtra(ProxyService.EXTRA_RUNNING, ProxyService.isRunning)
+            if (intent?.action != ProxyIntents.ACTION_STATE_CHANGED) return
+            val running = intent.getBooleanExtra(ProxyIntents.EXTRA_RUNNING, ProxyService.isRunning)
             applyState(running)
         }
     }
@@ -28,20 +28,18 @@ class MainActivity : AppCompatActivity() {
     private fun applyState(running: Boolean) {
         val status = findViewById<TextView>(R.id.statusText)
         val toggle = findViewById<Button>(R.id.toggleBtn)
-        status.text = if (running) "Started" else "Stopped"
+        status.text = getString(if (running) R.string.status_started else R.string.status_stopped)
         status.setBackgroundResource(
             if (running) R.drawable.status_badge_started else R.drawable.status_badge_stopped
         )
-        toggle.text = if (running) "Stop proxy" else "Start proxy"
+        toggle.text = getString(if (running) R.string.stop_proxy else R.string.start_proxy)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val requestNotif = registerForActivityResult(ActivityResultContracts.RequestPermission()) { _ ->
-            // No-op. If granted, foreground notification (and status icon) will be visible.
-        }
+        val requestNotif = registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
         if (Build.VERSION.SDK_INT >= 33) {
             val granted = ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) ==
                 PackageManager.PERMISSION_GRANTED
@@ -64,21 +62,18 @@ class MainActivity : AppCompatActivity() {
 
         val cfg = ProxyConfigStore.get(this).load()
         val link = ProxyConfigStore.get(this).tgProxyLink(cfg)
-        // Hide "settings" on main screen as requested, but keep the tg:// link working.
         configText.visibility = android.view.View.GONE
         infoText.visibility = android.view.View.GONE
 
         toggle.setOnClickListener {
             val running = ProxyStateStore.get(this).isRunning()
-            val action = if (running) ProxyService.ACTION_STOP else ProxyService.ACTION_START
+            val action = if (running) ProxyIntents.ACTION_STOP else ProxyIntents.ACTION_START
             startService(Intent(this, ProxyService::class.java).apply { this.action = action })
-            // Optimistic UI update; real state will be corrected by broadcast/prefs.
             applyState(!running)
         }
 
         openTelegram.setOnClickListener {
-            // Start proxy first so Telegram can connect immediately.
-            startService(Intent(this, ProxyService::class.java).apply { action = ProxyService.ACTION_START })
+            startService(Intent(this, ProxyService::class.java).apply { action = ProxyIntents.ACTION_START })
             ProxyStateStore.get(this).setRunning(true)
             applyState(true)
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link)))
@@ -94,7 +89,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        val filter = IntentFilter(ProxyService.ACTION_STATE_CHANGED)
+        val filter = IntentFilter(ProxyIntents.ACTION_STATE_CHANGED)
         if (Build.VERSION.SDK_INT >= 33) {
             registerReceiver(stateReceiver, filter, RECEIVER_NOT_EXPORTED)
         } else {

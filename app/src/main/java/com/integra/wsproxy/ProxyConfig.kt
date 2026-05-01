@@ -12,7 +12,6 @@ data class ProxyConfig(
         fun default(): ProxyConfig = ProxyConfig(
             listenHost = "127.0.0.1",
             listenPort = 1443,
-            // NOTE: in upstream this is random per install; we keep a fixed default for now.
             secretHex = "3075abe65830f0325116bb0416cadf9f",
             dcRedirects = mapOf(
                 2 to "149.154.167.220",

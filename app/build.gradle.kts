@@ -59,6 +59,17 @@ android {
     }
 }
 
+androidComponents {
+    onVariants(selector().withBuildType("debug")) { variant ->
+        variant.outputs.forEach { output ->
+            val method = output.javaClass.methods.firstOrNull { it.name == "getOutputFileName" }
+            val prop = method?.invoke(output)
+            val setMethod = prop?.javaClass?.methods?.firstOrNull { it.name == "set" && it.parameterTypes.size == 1 }
+            setMethod?.invoke(prop, "WSProxy.apk")
+        }
+    }
+}
+
 dependencies {
 
     implementation("androidx.core:core-ktx:1.10.1")

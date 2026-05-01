@@ -10,10 +10,9 @@ class ProxyActionReceiver : BroadcastReceiver() {
         val action = intent.action ?: return
 
         when (action) {
-            ProxyService.ACTION_OPEN_TELEGRAM -> {
-                // Ensure proxy is running, then open Telegram with prefilled proxy settings.
+            ProxyIntents.ACTION_OPEN_TELEGRAM -> {
                 context.startService(Intent(context, ProxyService::class.java).apply {
-                    this.action = ProxyService.ACTION_START
+                    this.action = ProxyIntents.ACTION_START
                 })
 
                 val cfg = ProxyConfigStore.get(context).load()

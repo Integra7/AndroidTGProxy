@@ -29,16 +29,6 @@ import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okio.ByteString
-
-/**
- * Minimal Kotlin port of Flowseal/tg-ws-proxy "proxy core":
- * - Accept MTProto proxy obfs2 handshake from client
- * - Decode dc_id and transport proto tag using secret
- * - Open Telegram WebSocket endpoint (/apiws) on the correct domain, but connect to chosen target DC IP
- * - Re-encrypt stream: client(secret obfs2) <-> relay(standard obfs2) over WebSocket frames
- *
- * This core is intended to be run inside a ForegroundService.
- */
 class MtprotoWsProxy(
     private val cfg: ProxyConfig,
 ) : Closeable {
@@ -96,10 +86,8 @@ class MtprotoWsProxy(
 
             val conn = connectWs(targetIp, domains) ?: return
 
-            // First, send relay init to TG side.
             conn.ws.send(ByteString.of(*relayInit))
 
-            // Bridge both ways until one side closes.
             bridge(input, output, conn, ctx)
         }
     }
@@ -136,15 +124,13 @@ class MtprotoWsProxy(
             val req = Request.Builder()
                 .url(url)
                 .header("Sec-WebSocket-Protocol", "binary")
-                // OkHttp will set key/version automatically.
                 .build()
 
             val latch = java.util.concurrent.CountDownLatch(1)
             val incoming = Channel<ByteArray>(capacity = Channel.BUFFERED)
-            var ws: WebSocket? = null
             var ok = false
 
-            ws = client.newWebSocket(req, object : WebSocketListener() {
+            val created = client.newWebSocket(req, object : WebSocketListener() {
                 override fun onOpen(webSocket: WebSocket, response: Response) {
                     ok = true
                     latch.countDown()
@@ -165,10 +151,9 @@ class MtprotoWsProxy(
                 }
             })
 
-            // Wait a bit for open/fail.
             latch.await(10, java.util.concurrent.TimeUnit.SECONDS)
-            if (ok && ws != null) return WsConn(ws, incoming)
-            ws?.cancel()
+            if (ok) return WsConn(created, incoming)
+            created.cancel()
             incoming.close()
         }
         return null
@@ -235,7 +220,7 @@ class MtprotoWsProxy(
         val iv = prekeyIv.copyOfRange(PREKEY_LEN, PREKEY_LEN + IV_LEN)
 
         val decKey = sha256(prekey + secret)
-        val dec = aesCtr(decKey, iv).apply {
+        val dec = aesCtr().apply {
             init(Cipher.ENCRYPT_MODE, SecretKeySpec(decKey, "AES"), IvParameterSpec(iv))
         }
         val decrypted = dec.update(handshake)
@@ -265,7 +250,7 @@ class MtprotoWsProxy(
 
             val encKey = rndBytes.copyOfRange(SKIP_LEN, SKIP_LEN + PREKEY_LEN)
             val encIv = rndBytes.copyOfRange(SKIP_LEN + PREKEY_LEN, SKIP_LEN + PREKEY_LEN + IV_LEN)
-            val cipher = aesCtr(encKey, encIv).apply {
+            val cipher = aesCtr().apply {
                 init(Cipher.ENCRYPT_MODE, SecretKeySpec(encKey, "AES"), IvParameterSpec(encIv))
             }
 
@@ -298,11 +283,11 @@ class MtprotoWsProxy(
         val clientEncKey = sha256(clientEncPrekeyIv.copyOfRange(0, PREKEY_LEN) + secret)
         val clientEncIv = clientEncPrekeyIv.copyOfRange(PREKEY_LEN, PREKEY_LEN + IV_LEN)
 
-        val clientDec = aesCtr(clientDecKey, clientDecIv).apply {
+        val clientDec = aesCtr().apply {
             init(Cipher.ENCRYPT_MODE, SecretKeySpec(clientDecKey, "AES"), IvParameterSpec(clientDecIv))
             update(ZERO_64)
         }
-        val clientEnc = aesCtr(clientEncKey, clientEncIv).apply {
+        val clientEnc = aesCtr().apply {
             init(Cipher.ENCRYPT_MODE, SecretKeySpec(clientEncKey, "AES"), IvParameterSpec(clientEncIv))
         }
 
@@ -313,18 +298,18 @@ class MtprotoWsProxy(
         val relayDecKey = relayDecPrekeyIv.copyOfRange(0, KEY_LEN)
         val relayDecIv = relayDecPrekeyIv.copyOfRange(KEY_LEN, KEY_LEN + IV_LEN)
 
-        val tgEnc = aesCtr(relayEncKey, relayEncIv).apply {
+        val tgEnc = aesCtr().apply {
             init(Cipher.ENCRYPT_MODE, SecretKeySpec(relayEncKey, "AES"), IvParameterSpec(relayEncIv))
             update(ZERO_64)
         }
-        val tgDec = aesCtr(relayDecKey, relayDecIv).apply {
+        val tgDec = aesCtr().apply {
             init(Cipher.ENCRYPT_MODE, SecretKeySpec(relayDecKey, "AES"), IvParameterSpec(relayDecIv))
         }
 
         return CryptoCtx(clientDec, clientEnc, tgEnc, tgDec)
     }
 
-    private fun aesCtr(key: ByteArray, iv: ByteArray): Cipher {
+    private fun aesCtr(): Cipher {
         return Cipher.getInstance("AES/CTR/NoPadding")
     }
 
