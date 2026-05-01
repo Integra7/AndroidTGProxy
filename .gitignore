@@ -1,10 +1,15 @@
 # Gradle / Android
 **/build/
 .gradle/
+captures/
+.externalNativeBuild/
+.cxx/
 
 # IntelliJ / Android Studio
 .idea/
 *.iml
+*.ps1
+*.png
 
 # Local SDK config
 local.properties
@@ -12,13 +17,35 @@ local.properties
 # Release signing (DO NOT COMMIT)
 keystore.properties
 *.keystore
+*.jks
+*.p12
 
 # Key export artifacts (DO NOT COMMIT)
 pepk_out.zip
 *_cert.pem
 upload_cert.pem
 rustore_cert.pem
+*.pem
+*.der
+*.crt
+*.cer
+*.pfx
 
 # Backups
 *.bak.*
+
+# Scripts / local tooling (DO NOT COMMIT)
+scripts/
+assets/
+
+# Archives (DO NOT COMMIT)
+*.zip
+*.7z
+*.rar
+*.tar
+*.gz
+
+# OS junk
+Thumbs.db
+Desktop.ini
 
