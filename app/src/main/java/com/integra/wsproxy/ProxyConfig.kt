@@ -7,6 +7,10 @@ data class ProxyConfig(
     val dcRedirects: Map<Int, String>,
     val dcOverrides: Map<Int, Int>,
     val bufferSize: Int,
+    /** WebSocket RFC ping from client; keeps NAT sessions alive. */
+    val wsPingIntervalSeconds: Long = 25L,
+    /** Buffered frames WS → MTProto; on overflow the session closes cleanly instead of corrupting. */
+    val wsIncomingChannelCapacity: Int = 512,
 ) {
     companion object {
         fun default(): ProxyConfig = ProxyConfig(

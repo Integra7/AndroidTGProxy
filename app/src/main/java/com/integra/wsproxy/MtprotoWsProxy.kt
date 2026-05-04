@@ -29,6 +29,8 @@ import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okio.ByteString
+import java.util.concurrent.TimeUnit
+
 class MtprotoWsProxy(
     private val cfg: ProxyConfig,
 ) : Closeable {
@@ -39,6 +41,11 @@ class MtprotoWsProxy(
 
     private val http = OkHttpClient.Builder()
         .retryOnConnectionFailure(true)
+        .connectTimeout(20, TimeUnit.SECONDS)
+        .readTimeout(0, TimeUnit.SECONDS)
+        .writeTimeout(120, TimeUnit.SECONDS)
+        .callTimeout(0, TimeUnit.SECONDS)
+        .pingInterval(cfg.wsPingIntervalSeconds, TimeUnit.SECONDS)
         .build()
 
     fun run() {
@@ -127,7 +134,7 @@ class MtprotoWsProxy(
                 .build()
 
             val latch = java.util.concurrent.CountDownLatch(1)
-            val incoming = Channel<ByteArray>(capacity = Channel.BUFFERED)
+            val incoming = Channel<ByteArray>(capacity = cfg.wsIncomingChannelCapacity)
             var ok = false
 
             val created = client.newWebSocket(req, object : WebSocketListener() {
@@ -137,7 +144,15 @@ class MtprotoWsProxy(
                 }
 
                 override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
-                    incoming.trySend(bytes.toByteArray())
+                    val payload = bytes.toByteArray()
+                    val sent = incoming.trySend(payload)
+                    if (!sent.isSuccess) {
+                        runCatching { webSocket.cancel() }
+                        incoming.close(
+                            sent.exceptionOrNull()
+                                ?: IllegalStateException("ws incoming queue overflow (${cfg.wsIncomingChannelCapacity})"),
+                        )
+                    }
                 }
 
                 override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {

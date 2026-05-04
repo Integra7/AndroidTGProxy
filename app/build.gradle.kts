@@ -1,9 +1,10 @@
+import com.android.build.api.variant.impl.VariantOutputImpl
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
 }
-
-import java.util.Properties
 
 android {
     namespace = "com.integra.wsproxy"
@@ -57,15 +58,16 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 androidComponents {
     onVariants(selector().withBuildType("debug")) { variant ->
         variant.outputs.forEach { output ->
-            val method = output.javaClass.methods.firstOrNull { it.name == "getOutputFileName" }
-            val prop = method?.invoke(output)
-            val setMethod = prop?.javaClass?.methods?.firstOrNull { it.name == "set" && it.parameterTypes.size == 1 }
-            setMethod?.invoke(prop, "WSProxy.apk")
+            (output as VariantOutputImpl).outputFileName = "WSProxy.apk"
         }
     }
 }
@@ -80,6 +82,6 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
 
     testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    testImplementation("org.robolectric:robolectric:4.13")
+    testImplementation("androidx.test:core:1.5.0")
 }
